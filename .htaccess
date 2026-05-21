@@ -1,0 +1,11 @@
+RewriteEngine On
+
+# 1. Capturar el encabezado Authorization (Bearer JWT)
+RewriteCond %{HTTP:Authorization} ^(.+)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+
+# 2. Redirigir todo al index.php (router PHP)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-l
+RewriteRule ^(.*)$ index.php?url=$1 [L,QSA]

@@ -1,0 +1,23 @@
+# Logs
+error_log
+*.log
+
+# Config con secretos (mantenerlo local)
+config/config.php
+
+# IDEs
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Uploads (excluir media subida por usuarios)
+public/img/experiences/
+public/img/providers/
+public/img/temp/
+
+# Tests
+*.rest
+*.test
