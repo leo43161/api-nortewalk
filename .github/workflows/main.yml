@@ -42,9 +42,9 @@ jobs:
           port: 21
           security: loose # DonWeb a veces usa certificados autofirmados en FTP, 'loose' ignora esa validación.
           local-dir: ./upload_dir/
-          server-dir: /public_html/v1/ # <-- Aquí cambias el destino
+          server-dir: /public_html/nortewalk/api/ # <-- Aquí cambias el destino
 
       # 5. Dispara la extracción en la nueva URL
       - name: Trigger unzip on server
-        run: curl --fail "https://tucucompras.com.ar/v1/extract.php?secret=${{
+        run: curl --fail "https://nortewalk.com.ar/api/extract.php?secret=${{
           secrets.UNZIP_SECRET }}"
