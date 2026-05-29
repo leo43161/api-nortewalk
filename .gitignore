@@ -2,8 +2,10 @@
 error_log
 *.log
 
-# Config con secretos (mantenerlo local)
-config/config.php
+# Config con secretos LOCALES (override que solo existe en dev)
+# config/config.php SI se trackea (lleva los defaults / valores de produccion)
+# config/config.local.php NO se trackea (override de XAMPP / dev)
+config/config.local.php
 
 # IDEs
 .vscode
