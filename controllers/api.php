@@ -9,7 +9,7 @@ class Api extends Controller
     function render()
     {
         setCors('GET');
-        jsonResponse(200, 'Norte Walk Admin API', null, [
+        jsonResponse(200, 'Norte Walk Admin API v1', null, [
             'endpoints' => [
                 'POST /api/login',
                 'POST /api/admin_create',
