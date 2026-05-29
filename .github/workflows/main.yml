@@ -46,5 +46,5 @@ jobs:
 
       # 5. Dispara la extracción en la nueva URL
       - name: Trigger unzip on server
-        run: curl --fail "https://nortewalk.com.ar/api/extract.php?secret=${{
+        run: curl --fail "https://amadamia.com.ar/nortewalk/api/extract.php?secret=${{
           secrets.UNZIP_SECRET }}"
