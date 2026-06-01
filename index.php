@@ -31,7 +31,8 @@ register_shutdown_function(function () {
 
 // Excepciones no atrapadas
 set_exception_handler(function ($e) {
-    error_log('Uncaught exception: ' . $e->getMessage() . ' en ' . $e->getFile() . ':' . $e->getLine());
+    $msg = get_class($e) . ': ' . $e->getMessage();
+    error_log('Uncaught exception: ' . $msg . ' en ' . $e->getFile() . ':' . $e->getLine());
     if (!headers_sent()) {
         http_response_code(500);
         header('Content-Type: application/json; charset=utf-8');
@@ -40,7 +41,10 @@ set_exception_handler(function ($e) {
     echo json_encode([
         'status'  => 500,
         'message' => 'Excepcion no manejada',
-        'error'   => $debug ? $e->getMessage() : null
+        // Mensaje del error: util para debug en prod (no expone secretos).
+        // Si queres ocultarlo del cliente en el futuro, cambiar a null aca.
+        'error'   => $msg,
+        'where'   => $debug ? ($e->getFile() . ':' . $e->getLine()) : null
     ]);
 });
 
@@ -70,6 +74,15 @@ if (defined('APP_DEBUG') && APP_DEBUG) {
 }
 
 // ---------------------------------------------------------------------
-// 5) Bootstrap
+// 5) mysqli: deshabilitar reporting de excepciones (PHP 8.1+ las activa
+//    por defecto). El codigo de libs/database.php usa el patron de
+//    retornar false + JSON; mantenemos ese contrato.
+// ---------------------------------------------------------------------
+if (function_exists('mysqli_report')) {
+    mysqli_report(MYSQLI_REPORT_OFF);
+}
+
+// ---------------------------------------------------------------------
+// 6) Bootstrap
 // ---------------------------------------------------------------------
 $app = new App();
