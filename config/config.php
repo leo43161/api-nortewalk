@@ -56,7 +56,7 @@ nw_define_default('JWT_KEY', 'NorteWalk_CHANGE_ME_use_64_random_chars_in_product
 nw_define_default('HOST',     'localhost');
 nw_define_default('DB',       'c2731887_nortew');
 nw_define_default('USER',     'c2731887_nortew');
-nw_define_default('PASSWORD', '');   // En el server real va en config.local.php
+nw_define_default('PASSWORD', 'wa92MUbigu');   // En el server real va en config.local.php
 nw_define_default('CHARSET',  'utf8mb4');
 
 // 6) CORS
