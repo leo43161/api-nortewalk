@@ -69,7 +69,8 @@ nw_define_default('ALLOWED_ORIGINS', json_encode([
     'https://nortewalk.com.ar',
     'https://www.nortewalk.com.ar',
     'https://admin.nortewalk.com',
-    'https://nortewalk.com'
+    'https://nortewalk.com',
+    'https://norte-walk-panel.netlify.app'
 ]));
 
 // 7) Uploads
