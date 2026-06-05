@@ -722,5 +722,42 @@ class apiModel extends Model
         $this->callOne($c, $sql);
         mysqli_close($c);
     }
+
+    // =================================================================
+    // LANGUAGES (idiomas del guía por experiencia)
+    // =================================================================
+
+    public function languageList($experienceId)
+    {
+        $c = $this->db->connect();
+        $rows = $this->callAll($c, "CALL sp_language_list_by_experience(" . (int)$experienceId . ")");
+        mysqli_close($c);
+        return $rows;
+    }
+
+    /**
+     * Reemplaza la lista completa de idiomas de una experiencia.
+     * $codes: array de codes ISO 639-1 (['es','en','pt']) — el SP de DB
+     * espera CSV; lo serializamos acá.
+     */
+    public function languageReplace($experienceId, array $codes)
+    {
+        $clean = [];
+        foreach ($codes as $code) {
+            $code = strtolower(trim((string)$code));
+            if (preg_match('/^[a-z]{2,5}$/', $code) && !in_array($code, $clean, true)) {
+                $clean[] = $code;
+            }
+        }
+        $csv = implode(',', $clean);
+        $c = $this->db->connect();
+        $sql = sprintf("CALL sp_language_replace(%d,%s)",
+            (int)$experienceId,
+            $this->esc($c, $csv)
+        );
+        $this->callOne($c, $sql);
+        mysqli_close($c);
+        return $clean;
+    }
 }
 ?>

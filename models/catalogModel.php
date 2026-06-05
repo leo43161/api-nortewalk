@@ -60,6 +60,9 @@ class catalogModel extends Model
         // 5. Schedules
         $main['schedules']  = $this->callAll($c, "CALL sp_schedule_list_by_experience($expId)");
 
+        // 6. Idiomas hablados por el guía
+        $main['languages']  = $this->callAll($c, "CALL sp_language_list_by_experience($expId)");
+
         mysqli_close($c);
         return $main;
     }

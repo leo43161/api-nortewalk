@@ -57,6 +57,8 @@ class Api extends Controller
                 'POST /api/translation_experience',
                 'POST /api/translation_inclusion',
                 'POST /api/translation_itinerary',
+                'GET  /api/language_list?experience_id=N',
+                'POST /api/language_replace',
                 'POST /api/upload_image'
             ]
         ]);
@@ -752,6 +754,35 @@ class Api extends Controller
         assertOwnsResource($payload, $this->model->getItineraryProviderId($d['itinerary_id']));
         $this->model->translationItinerary($d);
         jsonResponse(200, 'Traduccion guardada');
+    }
+
+    // =================================================================
+    // LANGUAGES (idiomas hablados por el guía en cada experiencia)
+    // =================================================================
+
+    public function language_list()
+    {
+        setCors('GET');
+        $payload = requireAuth();
+        $eid = (int)($_GET['experience_id'] ?? 0);
+        if (!$eid) jsonResponse(400, 'Falta experience_id');
+        assertOwnsExperience($this->model, $payload, $eid);
+        jsonResponse(200, 'OK', $this->model->languageList($eid));
+    }
+
+    public function language_replace()
+    {
+        setCors('POST');
+        $payload = requireAuth();
+        $d = readJson();
+        if (empty($d['experience_id'])) jsonResponse(400, 'Falta experience_id');
+        assertOwnsExperience($this->model, $payload, $d['experience_id']);
+
+        $codes = $d['codes'] ?? [];
+        if (!is_array($codes)) jsonResponse(400, 'codes debe ser un array');
+
+        $saved = $this->model->languageReplace($d['experience_id'], $codes);
+        jsonResponse(200, 'Idiomas actualizados', ['codes' => $saved]);
     }
 }
 ?>
