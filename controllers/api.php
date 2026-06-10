@@ -719,6 +719,26 @@ class Api extends Controller
         jsonResponse(200, 'OK');
     }
 
+    /**
+     * Agenda de reservas del guía por FECHA DE SALIDA (desired_date).
+     * Query: from (default hoy), to (default +60d), provider_id (solo admin).
+     */
+    public function booking_list()
+    {
+        setCors('GET');
+        $payload = requireAuth();
+        $scope = getScopeProviderId($payload);
+        $providerId = $scope !== null
+            ? $scope
+            : (!empty($_GET['provider_id']) ? (int)$_GET['provider_id'] : null);
+        if (!$providerId) jsonResponse(400, 'Falta provider_id');
+
+        $from = $_GET['from'] ?? date('Y-m-d');
+        $to   = $_GET['to']   ?? date('Y-m-d', strtotime('+60 days'));
+
+        jsonResponse(200, 'OK', $this->model->bookingListUpcoming($providerId, $from, $to));
+    }
+
     // =================================================================
     // TRADUCCIONES
     // =================================================================

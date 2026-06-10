@@ -90,19 +90,27 @@ class catalogModel extends Model
         return $row;
     }
 
+    /**
+     * Crea la reserva validando cupo en el SP.
+     * Devuelve la fila resumen (lead_id, booking_code, provider, tour...)
+     * o ['error' => msg, 'sqlstate' => '45001'|'45000'|...] si el SP rechaza.
+     */
     public function leadCreate($d)
     {
         $c = $this->db->connect();
-        $sql = sprintf("CALL sp_lead_create(%d,%s,%s,%s,%s,%s,%s,%s,%d,%s,%s,%s,%s,%s,%s,%s)",
+        $sql = sprintf("CALL sp_lead_create(%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%d,%s,%s,%s,%s,%s,%s,%s)",
             (int)$d['experience_id'],
             !empty($d['schedule_id']) ? (int)$d['schedule_id'] : 'NULL',
+            $this->esc($c, $d['booking_code']),
             $this->esc($c, $d['tourist_name']),
+            $this->esc($c, $d['tourist_surname']  ?? null),
             $this->esc($c, $d['tourist_phone']),
-            $this->esc($c, $d['tourist_email']     ?? null),
+            $this->esc($c, $d['tourist_email']    ?? null),
             $this->esc($c, $d['preferred_locale'] ?? 'es'),
             $this->esc($c, $d['desired_date']),
             $this->esc($c, $d['desired_time']     ?? null),
-            (int)$d['pax'],
+            max(1, (int)($d['pax_adults'] ?? 1)),
+            max(0, (int)($d['pax_children'] ?? 0)),
             $this->esc($c, $d['message']      ?? null),
             $this->esc($c, $d['source']       ?? null),
             $this->esc($c, $d['utm_source']   ?? null),
@@ -113,9 +121,11 @@ class catalogModel extends Model
         );
         $resultado = mysqli_query($c, $sql);
         if (!$resultado) {
-            $err = mysqli_error($c);
+            $err   = mysqli_error($c);
+            $state = mysqli_sqlstate($c);
+            $errno = mysqli_errno($c);
             mysqli_close($c);
-            return ['error' => $err];
+            return ['error' => $err, 'sqlstate' => $state, 'errno' => $errno];
         }
         $row = mysqli_fetch_assoc($resultado);
         mysqli_free_result($resultado);

@@ -677,6 +677,19 @@ class apiModel extends Model
         mysqli_close($c);
     }
 
+    public function bookingListUpcoming($providerId, $from, $to)
+    {
+        $c = $this->db->connect();
+        $sql = sprintf("CALL sp_booking_list_upcoming(%d,%s,%s)",
+            (int)$providerId,
+            $this->esc($c, $from),
+            $this->esc($c, $to)
+        );
+        $rows = $this->callAll($c, $sql);
+        mysqli_close($c);
+        return $rows;
+    }
+
     // =================================================================
     // TRADUCCIONES
     // =================================================================
