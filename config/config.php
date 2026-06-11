@@ -64,6 +64,7 @@ nw_define_default('ALLOWED_ORIGINS', json_encode([
     'http://localhost:3000',
     'http://localhost:3001',
     'http://localhost:7777',
+    'http://localhost:4040',
     'https://amadamia.com.ar',
     'https://www.amadamia.com.ar',
     'https://nortewalk.com.ar',
