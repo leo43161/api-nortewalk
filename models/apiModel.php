@@ -384,6 +384,19 @@ class apiModel extends Model
         return $row;
     }
 
+    public function experienceSetRating($d)
+    {
+        $c = $this->db->connect();
+        $sql = sprintf("CALL sp_experience_set_rating(%d,%s,%d,%s)",
+            (int)$d['id'],
+            $this->escNum($d['external_rating'] ?? null),
+            (int)($d['external_reviews_count'] ?? 0),
+            $this->esc($c, $d['external_reviews_url'] ?? null)
+        );
+        $this->callOne($c, $sql);
+        mysqli_close($c);
+    }
+
     public function experienceGet($id)
     {
         $c = $this->db->connect();
@@ -714,12 +727,17 @@ class apiModel extends Model
     public function translationInclusion($d)
     {
         $c = $this->db->connect();
-        $sql = sprintf("CALL sp_inclusion_translation_upsert(%d,%s,%s)",
-            (int)$d['inclusion_id'],
-            $this->esc($c, $d['locale']),
-            $this->esc($c, $d['text'])
-        );
-        $this->callOne($c, $sql);
+        if (trim((string)($d['text'] ?? '')) === '') {
+            mysqli_query($c, sprintf("DELETE FROM inclusion_translations WHERE inclusion_id = %d AND locale = %s",
+                (int)$d['inclusion_id'], $this->esc($c, $d['locale'])));
+        } else {
+            $sql = sprintf("CALL sp_inclusion_translation_upsert(%d,%s,%s)",
+                (int)$d['inclusion_id'],
+                $this->esc($c, $d['locale']),
+                $this->esc($c, $d['text'])
+            );
+            $this->callOne($c, $sql);
+        }
         mysqli_close($c);
     }
 
@@ -736,41 +754,17 @@ class apiModel extends Model
         mysqli_close($c);
     }
 
-    // =================================================================
-    // LANGUAGES (idiomas del guía por experiencia)
-    // =================================================================
-
-    public function languageList($experienceId)
+    /** 3 result sets del SP -> { experience: [...], inclusions: [...], itinerary: [...] } */
+    public function translationsGet($experienceId)
     {
         $c = $this->db->connect();
-        $rows = $this->callAll($c, "CALL sp_language_list_by_experience(" . (int)$experienceId . ")");
+        $sets = $this->callMulti($c, "CALL sp_translations_get_by_experience(" . (int)$experienceId . ")");
         mysqli_close($c);
-        return $rows;
-    }
-
-    /**
-     * Reemplaza la lista completa de idiomas de una experiencia.
-     * $codes: array de codes ISO 639-1 (['es','en','pt']) — el SP de DB
-     * espera CSV; lo serializamos acá.
-     */
-    public function languageReplace($experienceId, array $codes)
-    {
-        $clean = [];
-        foreach ($codes as $code) {
-            $code = strtolower(trim((string)$code));
-            if (preg_match('/^[a-z]{2,5}$/', $code) && !in_array($code, $clean, true)) {
-                $clean[] = $code;
-            }
-        }
-        $csv = implode(',', $clean);
-        $c = $this->db->connect();
-        $sql = sprintf("CALL sp_language_replace(%d,%s)",
-            (int)$experienceId,
-            $this->esc($c, $csv)
-        );
-        $this->callOne($c, $sql);
-        mysqli_close($c);
-        return $clean;
+        return [
+            'experience' => $sets[0] ?? [],
+            'inclusions' => $sets[1] ?? [],
+            'itinerary'  => $sets[2] ?? []
+        ];
     }
 }
 ?>

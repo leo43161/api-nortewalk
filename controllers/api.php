@@ -30,6 +30,7 @@ class Api extends Controller
                 'POST /api/experience_delete',
                 'POST /api/experience_toggle_active',
                 'POST /api/experience_toggle_featured',
+                'POST /api/experience_set_rating',
                 'GET  /api/experience_list',
                 'GET  /api/experience_get?id=N',
                 'POST /api/image_add',
@@ -57,8 +58,7 @@ class Api extends Controller
                 'POST /api/translation_experience',
                 'POST /api/translation_inclusion',
                 'POST /api/translation_itinerary',
-                'GET  /api/language_list?experience_id=N',
-                'POST /api/language_replace',
+                'GET  /api/translation_get?experience_id=N',
                 'POST /api/upload_image'
             ]
         ]);
@@ -381,6 +381,21 @@ class Api extends Controller
         if (empty($d['id'])) jsonResponse(400, 'Falta id');
         $res = $this->model->experienceToggleFeatured($d['id']);
         jsonResponse(200, 'OK', $res);
+    }
+
+    /** Reseña externa (Google/TripAdvisor). Solo admin: el guía no se califica a sí mismo. */
+    public function experience_set_rating()
+    {
+        setCors('POST');
+        requireAdmin();
+        $d = readJson();
+        if (empty($d['id'])) jsonResponse(400, 'Falta id');
+        $rating = $d['external_rating'] ?? null;
+        if ($rating !== null && $rating !== '' && ($rating < 0 || $rating > 5)) {
+            jsonResponse(400, 'La calificación va de 0 a 5');
+        }
+        $this->model->experienceSetRating($d);
+        jsonResponse(200, 'Reseña actualizada');
     }
 
     public function experience_list()
@@ -759,7 +774,8 @@ class Api extends Controller
         setCors('POST');
         $payload = requireAuth();
         $d = readJson();
-        if (empty($d['inclusion_id']) || empty($d['locale']) || empty($d['text'])) jsonResponse(400, 'Faltan datos');
+        // text vacío = borrar la traducción (vuelve a mostrarse el español)
+        if (empty($d['inclusion_id']) || empty($d['locale'])) jsonResponse(400, 'Faltan datos');
         assertOwnsResource($payload, $this->model->getInclusionProviderId($d['inclusion_id']));
         $this->model->translationInclusion($d);
         jsonResponse(200, 'Traduccion guardada');
@@ -776,33 +792,18 @@ class Api extends Controller
         jsonResponse(200, 'Traduccion guardada');
     }
 
-    // =================================================================
-    // LANGUAGES (idiomas hablados por el guía en cada experiencia)
-    // =================================================================
-
-    public function language_list()
+    /**
+     * Todas las traducciones EN/PT de una experiencia (ficha + inclusiones + itinerario).
+     * Los idiomas de la experiencia ya no se cargan: salen de sus horarios (migración v8).
+     */
+    public function translation_get()
     {
         setCors('GET');
         $payload = requireAuth();
         $eid = (int)($_GET['experience_id'] ?? 0);
         if (!$eid) jsonResponse(400, 'Falta experience_id');
         assertOwnsExperience($this->model, $payload, $eid);
-        jsonResponse(200, 'OK', $this->model->languageList($eid));
-    }
-
-    public function language_replace()
-    {
-        setCors('POST');
-        $payload = requireAuth();
-        $d = readJson();
-        if (empty($d['experience_id'])) jsonResponse(400, 'Falta experience_id');
-        assertOwnsExperience($this->model, $payload, $d['experience_id']);
-
-        $codes = $d['codes'] ?? [];
-        if (!is_array($codes)) jsonResponse(400, 'codes debe ser un array');
-
-        $saved = $this->model->languageReplace($d['experience_id'], $codes);
-        jsonResponse(200, 'Idiomas actualizados', ['codes' => $saved]);
+        jsonResponse(200, 'OK', $this->model->translationsGet($eid));
     }
 }
 ?>
