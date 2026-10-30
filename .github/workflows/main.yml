@@ -59,3 +59,20 @@ jobs:
       - name: Trigger unzip on server
         run: curl --fail "https://amadamia.com.ar/nortewalk/api/extract.php?secret=${{
           secrets.UNZIP_SECRET }}"
+
+      # 6. Una copia de la API subida a mano en /nortewalk/api/api/ tapaba las
+      #    rutas del panel (.../nortewalk/api/api/login -> 404 sin CORS).
+      #    Si existe, se MUEVE fuera de public_html (no se borra: queda de
+      #    backup en la raíz del FTP). Si no existe, no hace nada.
+      - name: Move stray nested copy out of the web root
+        continue-on-error: true
+        env:
+          FTP_HOST: ${{ secrets.PANEL_SERVER }}
+          FTP_USER: ${{ secrets.PANEL_USERNAME }}
+          LFTP_PASSWORD: ${{ secrets.PANEL_PASSWORD }}
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq lftp >/dev/null
+          lftp -u "$FTP_USER" --env-password "$FTP_HOST" -e "
+            set ftp:ssl-force true; set ssl:verify-certificate no; set net:max-retries 2;
+            cls -d /public_html/nortewalk/api/api/ && mv /public_html/nortewalk/api/api /copia-anidada-api-backup-$(date +%Y%m%d%H%M);
+            bye" || echo "Sin copia anidada para mover"
